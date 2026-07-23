@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinFlow | Personal Finance & Expense Tracker</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- Custom CSS for Premium UI (Glassmorphism, Glows, and Animations) -->
+    <link rel="stylesheet" href="/static/styles.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="h-full font-sans antialiased overflow-x-hidden">
+    <!-- App Container -->
+    <div class="flex h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950">
+        
+        <!-- Background Decorative Orbs -->
+        <div class="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-emerald-500/10 blur-[120px] pointer-events-none"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-500/10 blur-[130px] pointer-events-none"></div>
+        <div class="absolute top-[40%] right-[20%] w-[300px] h-[300px] rounded-full bg-purple-500/5 blur-[100px] pointer-events-none"></div>
+
+        <!-- Sidebar Navigation -->
+        <aside class="w-64 bg-slate-900/60 border-r border-slate-800/80 backdrop-blur-xl flex flex-col z-20">
+            <div class="h-16 flex items-center px-6 border-b border-slate-800/60">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-400 to-indigo-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                        <i data-lucide="wallet" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <span class="font-display font-bold text-xl tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">FinFlow</span>
+                </div>
+            </div>
+            
+            <!-- Navigation Links -->
+            <nav class="flex-1 py-6 px-4 space-y-1.5 overflow-y-auto">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 active bg-slate-800/40 text-emerald-400 border border-slate-700/30">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                    Dashboard
+                </button>
+                <button onclick="switchTab('transactions')" id="nav-transactions" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 text-slate-400 hover:text-slate-200 hover:bg-slate-800/20">
+                    <i data-lucide="arrow-right-left" class="w-4 h-4"></i>
+                    Transactions
+                </button>
+                <button onclick="switchTab('budgets')" id="nav-budgets" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 text-slate-400 hover:text-slate-200 hover:bg-slate-800/20">
+                    <i data-lucide="pie-chart" class="w-4 h-4"></i>
+                    Budgets
+                </button>
+                <button onclick="switchTab('goals')" id="nav-goals" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 text-slate-400 hover:text-slate-200 hover:bg-slate-800/20">
+                    <i data-lucide="target" class="w-4 h-4"></i>
+                    Savings Goals
+                </button>
+            </nav>
+            
+            <!-- Bottom Profile / Status -->
+            <div class="p-4 border-t border-slate-800/60 bg-slate-950/20">
+                <div class="flex items-center gap-3 px-2 py-1 mb-2">
+                    <div id="user-profile-avatar" class="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-display font-semibold text-emerald-400">
+                        U
+                    </div>
+                    <div class="min-w-0">
+                        <p id="user-profile-email" class="text-xs font-semibold text-slate-200 truncate">Loading...</p>
+                        <p class="text-[10px] text-emerald-400 flex items-center gap-1">
+                            <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Online
+                        </p>
+                    </div>
+                </div>
+                <button onclick="handleLogout()" class="w-full flex items-center justify-center gap-2 py-2 bg-slate-950/40 hover:bg-rose-500/10 text-[10px] text-slate-400 hover:text-rose-400 border border-slate-800/50 hover:border-rose-500/20 rounded-xl transition duration-200">
+                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                    Log Out
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden z-10 relative">
+            
+            <!-- Header bar -->
+            <header class="h-16 border-b border-slate-800/50 bg-slate-900/40 backdrop-blur-md px-8 flex items-center justify-between">
+                <h1 id="page-title" class="font-display text-2xl font-bold tracking-tight text-white">Dashboard</h1>
+                
+                <div class="flex items-center gap-4">
+                    <!-- Export Button -->
+                    <button onclick="exportTransactions()" class="flex items-center gap-2 px-4 py-2 bg-slate-800/60 hover:bg-slate-700/60 text-slate-200 border border-slate-700/50 hover:border-slate-600 rounded-xl text-sm font-medium transition-all duration-200 shadow-sm shadow-black/10">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        Export CSV
+                    </button>
+                    <!-- Quick Add Button -->
+                    <button onclick="openTransactionModal()" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white rounded-xl text-sm font-semibold tracking-wide transition-all duration-200 shadow-md shadow-emerald-500/10 hover:shadow-emerald-400/20 hover:scale-[1.01] active:scale-[0.99]">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        New Transaction
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Screens Wrapper -->
+            <div id="content-container" class="flex-1 overflow-y-auto p-8 space-y-8">
+                
+                <!-- 1. DASHBOARD VIEW -->
+                <section id="view-dashboard" class="space-y-8 block">
+                    <!-- Metrics Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <!-- Total Income Card -->
+                        <div class="card p-6 bg-slate-900/40 border border-slate-800/80 rounded-2xl relative overflow-hidden backdrop-blur-md group hover:border-slate-700/60 transition-all duration-300">
+                            <div class="absolute -right-3 -top-3 w-16 h-16 bg-emerald-500/5 group-hover:bg-emerald-500/10 rounded-full blur-md transition-all duration-300"></div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-sm font-medium text-slate-400">Total Income</span>
+                                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
+                                    <i data-lucide="trending-up" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <h3 id="stat-income" class="font-display text-2xl font-bold tracking-tight text-white">₹0.00</h3>
+                            <p class="text-xs text-slate-500 mt-2">All recorded income</p>
+                        </div>
+                        <!-- Total Expenses Card -->
+                        <div class="card p-6 bg-slate-900/40 border border-slate-800/80 rounded-2xl relative overflow-hidden backdrop-blur-md group hover:border-slate-700/60 transition-all duration-300">
+                            <div class="absolute -right-3 -top-3 w-16 h-16 bg-rose-500/5 group-hover:bg-rose-500/10 rounded-full blur-md transition-all duration-300"></div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-sm font-medium text-slate-400">Total Expenses</span>
+                                <div class="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center border border-rose-500/20 text-rose-400">
+                                    <i data-lucide="trending-down" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <h3 id="stat-expenses" class="font-display text-2xl font-bold tracking-tight text-white">₹0.00</h3>
+                            <p class="text-xs text-slate-500 mt-2">All recorded expenditures</p>
+                        </div>
+                        <!-- Net Balance Card -->
+                        <div class="card p-6 bg-slate-900/40 border border-slate-800/80 rounded-2xl relative overflow-hidden backdrop-blur-md group hover:border-slate-700/60 transition-all duration-300">
+                            <div class="absolute -right-3 -top-3 w-16 h-16 bg-indigo-500/5 group-hover:bg-indigo-500/10 rounded-full blur-md transition-all duration-300"></div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-sm font-medium text-slate-400">Net Balance</span>
+                                <div class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 text-indigo-400">
+                                    <i data-lucide="activity" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <h3 id="stat-balance" class="font-display text-2xl font-bold tracking-tight text-white">₹0.00</h3>
+                            <p class="text-xs text-slate-500 mt-2">Income minus expenses</p>
+                        </div>
+                        <!-- Active Savings Goals Card -->
+                        <div class="card p-6 bg-slate-900/40 border border-slate-800/80 rounded-2xl relative overflow-hidden backdrop-blur-md group hover:border-slate-700/60 transition-all duration-300">
+                            <div class="absolute -right-3 -top-3 w-16 h-16 bg-amber-500/5 group-hover:bg-amber-500/10 rounded-full blur-md transition-all duration-300"></div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-sm font-medium text-slate-400">Active Goals</span>
+                                <div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-400">
+                                    <i data-lucide="award" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <h3 id="stat-goals" class="font-display text-2xl font-bold tracking-tight text-white">0</h3>
+                            <p class="text-xs text-slate-500 mt-2">Ongoing savings objectives</p>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                        <!-- Monthly Trend Chart -->
+                        <div class="lg:col-span-3 p-6 bg-slate-900/40 border border-slate-800/80 rounded-2xl backdrop-blur-md flex flex-col h-[400px]">
+                            <div class="flex items-center justify-between mb-6">
+                                <div>
+                                    <h4 class="font-display text-lg font-bold text-white">Monthly Comparison</h4>
+                                    <p class="text-xs text-slate-400">Income vs Expenses history</p>
+                                </div>
+                                <div class="flex items-center gap-4 text-xs">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                        <span class="text-slate-300">Income</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                                        <span class="text-slate-300">Expenses</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-h-0 relative">
+                                <canvas id="trendChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Expense Category Chart -->
+                        <div class="lg:col-span-2 p-6 bg-slate-900/40 border border-slate-800/80 rounded-2xl backdrop-blur-md flex flex-col h-[400px]">
+                            <div>
+                                <h4 class="font-display text-lg font-bold text-white">Category Breakdown</h4>
+                                <p class="text-xs text-slate-400 font-medium">Top spending channels</p>
+                            </div>
+                            <div class="flex-1 min-h-0 relative flex items-center justify-center my-4">
+                                <canvas id="categoryChart"></canvas>
+                                <div id="categoryChartEmpty" class="absolute hidden flex flex-col items-center justify-center text-center text-slate-400 p-4">
+                                    <i data-lucide="pie-chart" class="w-12 h-12 text-slate-600 mb-2"></i>
+                                    <p class="text-sm font-medium">No expense records found</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity Section -->
+                    <div class="p-6 bg-slate-900/40 border border-slate-800/80 rounded-2xl backdrop-blur-md">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="font-display text-lg font-bold text-white">Recent Transactions</h4>
+                            <button onclick="switchTab('transactions')" class="text-sm font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+                                View all
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm text-slate-300 border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-800 text-slate-400 font-medium text-xs uppercase tracking-wider">
+                                        <th class="py-3 px-4">Date</th>
+                                        <th class="py-3 px-4">Category</th>
+                                        <th class="py-3 px-4">Method</th>
+                                        <th class="py-3 px-4">Notes</th>
+                                        <th class="py-3 px-4 text-right">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-transactions-list" class="divide-y divide-slate-800/40">
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. TRANSACTIONS VIEW -->
+                <section id="view-transactions" class="space-y-6 hidden animate-fadeIn">
+                    <!-- Filters Panel -->
+                    <div class="p-5 bg-slate-900/40 border border-slate-800/80 rounded-2xl backdrop-blur-md flex flex-wrap items-center gap-4">
+                        <!-- Search -->
+                        <div class="flex-1 min-w-[200px] relative">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                            <input type="text" id="search-input" placeholder="Search notes or categories..." class="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none transition duration-200">
+                        </div>
+                        <!-- Type Filter -->
+                        <div class="w-36">
+                            <select id="filter-type" class="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition duration-200">
+                                <option value="all">All Types</option>
+                                <option value="income">Income</option>
+                                <option value="expense">Expense</option>
+                            </select>
+                        </div>
+                        <!-- Category Filter -->
+                        <div class="w-44">
+                            <select id="filter-category" class="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition duration-200">
+                                <option value="all">All Categories</option>
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                        <!-- Date Range Filters -->
+                        <div class="flex items-center gap-2">
+                            <input type="date" id="filter-start-date" class="bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2 text-sm text-white outline-none transition duration-200">
+                            <span class="text-xs text-slate-500">to</span>
+                            <input type="date" id="filter-end-date" class="bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2 text-sm text-white outline-none transition duration-200">
+                        </div>
+                        <!-- Clear Filters -->
+                        <button onclick="clearFilters()" class="px-4 py-2.5 hover:bg-slate-800/40 text-slate-400 hover:text-slate-200 border border-transparent hover:border-slate-800 rounded-xl text-sm font-medium transition duration-200">
+                            Reset
+                        </button>
+                    </div>
+
+                    <!-- Data Table -->
+                    <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl backdrop-blur-md overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm text-slate-300 border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-800 bg-slate-950/20 text-slate-400 font-semibold text-xs uppercase tracking-wider select-none">
+                                        <th onclick="setSort('date')" class="py-4 px-6 cursor-pointer hover:bg-slate-800/20 hover:text-white transition duration-200">
+                                            <div class="flex items-center gap-1.5">
+                                                Date
+                                                <i id="sort-date-icon" data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
+                                            </div>
+                                        </th>
+                                        <th onclick="setSort('type')" class="py-4 px-6 cursor-pointer hover:bg-slate-800/20 hover:text-white transition duration-200">
+                                            <div class="flex items-center gap-1.5">
+                                                Type
+                                                <i id="sort-type-icon" data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
+                                            </div>
+                                        </th>
+                                        <th onclick="setSort('category')" class="py-4 px-6 cursor-pointer hover:bg-slate-800/20 hover:text-white transition duration-200">
+                                            <div class="flex items-center gap-1.5">
+                                                Category
+                                                <i id="sort-category-icon" data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
+                                            </div>
+                                        </th>
+                                        <th onclick="setSort('payment_method')" class="py-4 px-6 cursor-pointer hover:bg-slate-800/20 hover:text-white transition duration-200">
+                                            <div class="flex items-center gap-1.5">
+                                                Payment Method
+                                                <i id="sort-payment_method-icon" data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
+                                            </div>
+                                        </th>
+                                        <th class="py-4 px-6">Notes</th>
+                                        <th onclick="setSort('amount')" class="py-4 px-6 cursor-pointer hover:bg-slate-800/20 hover:text-white transition duration-200 text-right">
+                                            <div class="flex items-center gap-1.5 justify-end">
+                                                Amount
+                                                <i id="sort-amount-icon" data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
+                                            </div>
+                                        </th>
+                                        <th class="py-4 px-6 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactions-list" class="divide-y divide-slate-800/40">
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
+                            
+                            <div id="transactions-empty" class="hidden p-12 text-center text-slate-500 flex flex-col items-center justify-center">
+                                <i data-lucide="receipt" class="w-16 h-16 text-slate-700 mb-3"></i>
+                                <h5 class="text-base font-bold text-slate-400">No Transactions</h5>
+                                <p class="text-xs text-slate-500 mt-1">Get started by logging your income or expenses.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. BUDGETS VIEW -->
+                <section id="view-budgets" class="space-y-8 hidden animate-fadeIn">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-display text-xl font-bold text-white">Monthly Budgets</h3>
+                            <p class="text-xs text-slate-400 mt-1">Control and analyze monthly category spend ceilings</p>
+                        </div>
+                        <button onclick="openBudgetModal()" class="flex items-center gap-2 px-4 py-2 bg-slate-800/60 hover:bg-slate-700/60 text-slate-200 border border-slate-700/50 hover:border-slate-600 rounded-xl text-sm font-medium transition duration-200">
+                            <i data-lucide="settings" class="w-4 h-4"></i>
+                            Configure Budgets
+                        </button>
+                    </div>
+
+                    <!-- Budgets Progress Grid -->
+                    <div id="budgets-progress-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Loaded dynamically -->
+                    </div>
+
+                    <div id="budgets-empty" class="hidden p-12 border border-slate-800 border-dashed rounded-2xl text-center text-slate-500 flex flex-col items-center justify-center">
+                        <i data-lucide="sliders" class="w-12 h-12 text-slate-700 mb-3"></i>
+                        <h5 class="text-sm font-semibold text-slate-400">No Category Budgets Set</h5>
+                        <p class="text-xs text-slate-500 mt-1">Setup category limits to track active savings potential.</p>
+                    </div>
+                </section>
+
+                <!-- 4. GOALS VIEW -->
+                <section id="view-goals" class="space-y-8 hidden animate-fadeIn">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-display text-xl font-bold text-white">Savings & Funding Goals</h3>
+                            <p class="text-xs text-slate-400 mt-1">Keep track of target savings values and deadlines</p>
+                        </div>
+                        <button onclick="openGoalModal()" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white rounded-xl text-sm font-semibold transition duration-200">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            New Savings Goal
+                        </button>
+                    </div>
+
+                    <!-- Goals Grid -->
+                    <div id="goals-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Loaded dynamically -->
+                    </div>
+
+                    <div id="goals-empty" class="hidden p-12 border border-slate-800 border-dashed rounded-2xl text-center text-slate-500 flex flex-col items-center justify-center">
+                        <i data-lucide="target" class="w-12 h-12 text-slate-700 mb-3"></i>
+                        <h5 class="text-sm font-semibold text-slate-400">No Active Savings Goals</h5>
+                        <p class="text-xs text-slate-500 mt-1">Add details on goals like buying a house, startup funding or holiday funds.</p>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- TRANSACTION FORM MODAL (Add / Edit) -->
+    <div id="transaction-modal" class="modal-overlay hidden">
+        <div class="modal-content max-w-md w-full p-6 bg-slate-900/90 border border-slate-800 backdrop-blur-2xl rounded-2xl shadow-2xl relative">
+            <button onclick="closeTransactionModal()" class="absolute right-4 top-4 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h4 id="tx-modal-title" class="font-display text-lg font-bold text-white mb-6">New Transaction</h4>
+            
+            <form id="transaction-form" onsubmit="saveTransaction(event)" class="space-y-4">
+                <input type="hidden" id="tx-id">
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Type</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" id="type-btn-expense" onclick="setFormType('expense')" class="py-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-400 font-semibold text-sm transition">
+                            Expense
+                        </button>
+                        <button type="button" id="type-btn-income" onclick="setFormType('income')" class="py-2.5 rounded-xl border border-slate-800 bg-slate-950/40 text-slate-400 font-semibold text-sm transition">
+                            Income
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Amount (₹)</label>
+                        <input type="number" step="0.01" min="0.01" id="tx-amount" required placeholder="0.00" class="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Date</label>
+                        <input type="date" id="tx-date" required class="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Category</label>
+                        <select id="tx-category" required class="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition">
+                            <option value="">Select Category</option>
+                            <!-- Categorized values based on type -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Payment Method</label>
+                        <select id="tx-payment-method" required class="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition">
+                            <option value="Cash">Cash</option>
+                            <option value="Credit Card">Credit Card</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Notes</label>
+                    <textarea id="tx-notes" rows="3" placeholder="Description of the transaction..." class="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition resize-none"></textarea>
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="closeTransactionModal()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700/60 text-slate-200 border border-slate-700/50 rounded-xl text-sm font-semibold transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white rounded-xl text-sm font-semibold tracking-wide transition shadow-md shadow-emerald-500/10">
+                        Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SAVINGS GOAL FORM MODAL -->
+    <div id="goal-modal" class="modal-overlay hidden">
+        <div class="modal-content max-w-sm w-full p-6 bg-slate-900/90 border border-slate-800 backdrop-blur-2xl rounded-2xl shadow-2xl relative">
+            <button onclick="closeGoalModal()" class="absolute right-4 top-4 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h4 id="goal-modal-title" class="font-display text-lg font-bold text-white mb-6">New Savings Goal</h4>
+            
+            <form id="goal-form" onsubmit="saveGoal(event)" class="space-y-4">
+                <input type="hidden" id="goal-id">
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Goal Name</label>
+                    <input type="text" id="goal-name" required placeholder="e.g. Emergency Fund, New Car" class="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Target Amount (₹)</label>
+                        <input type="number" step="0.01" min="0.01" id="goal-target" required placeholder="0.00" class="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Target Date</label>
+                        <input type="date" id="goal-date" required class="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Current Amount (₹)</label>
+                    <input type="number" step="0.01" min="0" id="goal-current" value="0.00" class="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition">
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="closeGoalModal()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700/60 text-slate-200 border border-slate-700/50 rounded-xl text-sm font-semibold transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white rounded-xl text-sm font-semibold tracking-wide transition shadow-md shadow-emerald-500/10">
+                        Save Goal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- GOAL PROGRESS QUICK UPDATE MODAL -->
+    <div id="goal-progress-modal" class="modal-overlay hidden">
+        <div class="modal-content max-w-xs w-full p-6 bg-slate-900/90 border border-slate-800 backdrop-blur-2xl rounded-2xl shadow-2xl relative">
+            <button onclick="closeGoalProgressModal()" class="absolute right-4 top-4 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h4 class="font-display text-lg font-bold text-white mb-6">Update Progress</h4>
+            
+            <form id="goal-progress-form" onsubmit="saveGoalProgress(event)" class="space-y-4">
+                <input type="hidden" id="goal-progress-id">
+                
+                <div>
+                    <label id="goal-progress-label" class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Current Saved Amount (₹)</label>
+                    <input type="number" step="0.01" min="0" id="goal-progress-amount" required class="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition animate-pulse-glow">
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="closeGoalProgressModal()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700/60 text-slate-200 border border-slate-700/50 rounded-xl text-sm font-semibold transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white rounded-xl text-sm font-semibold tracking-wide transition shadow-md shadow-emerald-500/10">
+                        Update
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- BUDGET FORM MODAL -->
+    <div id="budget-modal" class="modal-overlay hidden">
+        <div class="modal-content max-w-sm w-full p-6 bg-slate-900/90 border border-slate-800 backdrop-blur-2xl rounded-2xl shadow-2xl relative">
+            <button onclick="closeBudgetModal()" class="absolute right-4 top-4 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h4 class="font-display text-lg font-bold text-white mb-6">Set Category Budget Limit</h4>
+            
+            <form id="budget-form" onsubmit="saveBudget(event)" class="space-y-4">
+                <input type="hidden" id="budget-id">
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Category</label>
+                    <select id="budget-category" required class="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition">
+                        <option value="">Select Expense Category</option>
+                        <option value="Food">Food</option>
+                        <option value="Rent">Rent</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Travel">Travel</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Monthly Spend Limit (₹)</label>
+                    <input type="number" step="0.01" min="0.01" id="budget-limit" required placeholder="0.00" class="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none transition">
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="closeBudgetModal()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700/60 text-slate-200 border border-slate-700/50 rounded-xl text-sm font-semibold transition">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white rounded-xl text-sm font-semibold tracking-wide transition shadow-md shadow-emerald-500/10">
+                        Set Budget
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- AUTH/LOGIN SCREEN OVERLAY -->
+    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-2xl flex items-center justify-center overflow-hidden">
+        <!-- Background Orbs for Login Screen -->
+        <div class="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] rounded-full bg-emerald-500/10 blur-[100px] pointer-events-none"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[450px] h-[450px] rounded-full bg-indigo-500/10 blur-[110px] pointer-events-none"></div>
+
+        <div class="max-w-md w-full p-8 bg-slate-900/60 border border-slate-800/80 rounded-3xl backdrop-blur-xl shadow-2xl relative z-10 m-4">
+            <div class="flex flex-col items-center mb-8">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-400 to-indigo-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-3">
+                    <i data-lucide="wallet" class="w-6 h-6 text-white"></i>
+                </div>
+                <h2 class="font-display font-bold text-2xl text-white tracking-tight">Welcome to FinFlow</h2>
+                <p class="text-xs text-slate-400 mt-1">Personal Finance & Expense Tracker</p>
+            </div>
+
+            <!-- Login / Register Tabs -->
+            <div class="grid grid-cols-2 gap-2 bg-slate-950/60 p-1.5 rounded-2xl mb-6 border border-slate-800/60">
+                <button onclick="toggleAuthTab('login')" id="tab-auth-login" class="py-2 rounded-xl text-sm font-semibold text-emerald-400 bg-slate-800/40 border border-slate-700/30 transition">
+                    Sign In
+                </button>
+                <button onclick="toggleAuthTab('register')" id="tab-auth-register" class="py-2 rounded-xl text-sm font-semibold text-slate-400 hover:text-slate-200 transition">
+                    Sign Up
+                </button>
+            </div>
+
+            <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <input type="hidden" id="auth-action" value="login">
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Email Address</label>
+                    <input type="email" id="auth-email" required placeholder="e.g. user@example.com" class="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-3 text-sm text-white outline-none transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Password</label>
+                    <input type="password" id="auth-password" required placeholder="••••••••" class="w-full bg-slate-950/60 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-3 text-sm text-white outline-none transition">
+                </div>
+
+                <div id="auth-error-msg" class="text-xs font-medium text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-2.5 hidden">
+                    <!-- Error message goes here -->
+                </div>
+
+                <button type="submit" id="auth-submit-btn" class="w-full py-3.5 mt-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white rounded-xl text-sm font-bold tracking-wide transition shadow-lg shadow-emerald-500/15 hover:scale-[1.01] active:scale-[0.99]">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="mt-6 pt-6 border-t border-slate-800/40 text-center">
+                <div class="p-3 bg-slate-950/40 rounded-2xl border border-slate-800/60 text-left">
+                    <p class="text-[10px] text-slate-500 leading-normal flex items-start gap-1.5">
+                        <span class="text-amber-400 font-bold">💡</span>
+                        <span><strong>Seed Demo:</strong> You can sign in using email <strong>user@example.com</strong> and password <strong>password123</strong> to view populated tables and analytics!</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import JavaScript logic -->
+    <script src="/static/app.js"></script>
+</body>
+</html>
